@@ -12,33 +12,17 @@ class TodoListViewController: UITableViewController {
 
 //    var items = ["Find Mike", "Buy Eggs" , "Destroy Demogorgon"]
     var items : [Todo] = []
-
-    let defaults  = UserDefaults.standard
+    
+    // Path to the plist file
+    let dataFilePath = FileManager.default.urls(for: .documentDirectory
+        , in: .userDomainMask).first?.appendingPathComponent("Todos.plist")
     
     override func viewDidLoad() {
         super.viewDidLoad()
         // Do any additional setup after loading the view, typically from a nib.
+
         
-        self.tableView.delegate = self
-        self.tableView.dataSource = self
-        
-        let newItem = Todo()
-        newItem.title = "Find Mike"
-        
-        let newItem2 = Todo()
-        newItem2.title = "Buy Eggs"
-        
-        let newItem3 = Todo()
-        newItem3.title = "Destroy Demogorgon"
-        
-        items.append(newItem)
-        items.append(newItem2)
-        items.append(newItem3)
-        
-        
-        if let currentItems = self.defaults.array(forKey: "TodoList") as? [Todo] {
-            self.items = currentItems
-        }
+        loadTodos()
     }
     
     //MARK - Tableciew Datasource Methods
@@ -64,6 +48,7 @@ class TodoListViewController: UITableViewController {
 
         items[indexPath.row].done = !items[indexPath.row].done
         
+        saveTodos()
         tableView.reloadData()
         tableView.deselectRow(at: indexPath, animated: true)
     }
@@ -81,7 +66,7 @@ class TodoListViewController: UITableViewController {
             newItem.title = textField.text!
             self.items.append(newItem)
             
-            self.defaults.set(self.items, forKey: "TodoList")
+            self.saveTodos()
             self.tableView.reloadData()
         }
         
@@ -94,6 +79,31 @@ class TodoListViewController: UITableViewController {
         alert.addAction(action);
         
         present(alert, animated: true, completion: nil)
+    }
+    
+    func saveTodos(){
+        let encoder = PropertyListEncoder()
+        
+        do {
+            let data = try encoder.encode(items)
+            
+            try data.write(to: dataFilePath!)
+        }catch {
+            print("error encoding todos")
+        }
+        
+    }
+    
+    func loadTodos() {
+        let decoder = PropertyListDecoder()
+        
+        do {
+            let data = try Data(contentsOf: dataFilePath!)
+            items = try decoder.decode([Todo].self, from: data)
+        } catch  {
+            print("data in todos.plist could not be decoded")
+        }
+        
     }
     
     
