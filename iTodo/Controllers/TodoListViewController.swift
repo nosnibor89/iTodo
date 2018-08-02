@@ -19,6 +19,11 @@ class TodoListViewController: UITableViewController {
     }()
 
     var items : [Todo] = []
+    var category : Category? {
+        didSet {
+            loadTodos()
+        }
+    }
     
     override func viewDidLoad() {
         super.viewDidLoad()
@@ -82,6 +87,7 @@ class TodoListViewController: UITableViewController {
             let newItem = Todo(context: self.context)
             newItem.title = textField.text!
             newItem.done = false
+            newItem.category = self.category
             self.items.append(newItem)
             
             self.saveTodos()
@@ -109,7 +115,19 @@ class TodoListViewController: UITableViewController {
     }
     
     func loadTodos(withRequest request: NSFetchRequest<Todo> = Todo.fetchRequest()) {
+        
+        let categoryPredicate = NSPredicate(format: "category.name MATCHES %@", category!.name!)
+        var predicate = categoryPredicate
+        
+        if request.predicate != nil {
+            let initialPredicate = request.predicate
+            predicate = NSCompoundPredicate(type: .and, subpredicates: [categoryPredicate, initialPredicate!])
+        }
+        
+        request.predicate = predicate
+        
         do {
+
             items = try context.fetch(request)
         } catch  {
             print("error fetching todos \(error)")

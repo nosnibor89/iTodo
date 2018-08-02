@@ -11,7 +11,8 @@ import CoreData
 
 class CategoryViewController: UITableViewController {
 
-    var categories = [Category]()
+    var categories: [Category] = [Category]()
+    var selectedCategory: Category?
     
     lazy var context : NSManagedObjectContext = {
         let appDelegate = UIApplication.shared.delegate as! AppDelegate
@@ -23,7 +24,7 @@ class CategoryViewController: UITableViewController {
     override func viewDidLoad() {
         super.viewDidLoad()
         
-        
+        loadCategories()
         
     }
     
@@ -39,7 +40,6 @@ class CategoryViewController: UITableViewController {
             category.name = categoryNametextField.text
             category.todos = []
             
-            print(category.name!)
             self.categories.append(category)
             
             self.saveCategories();
@@ -71,6 +71,22 @@ class CategoryViewController: UITableViewController {
         return cell
     }
     
+    override func tableView(_ tableView: UITableView, didSelectRowAt indexPath: IndexPath) {
+//        selectedCategory = categories[indexPath.row]
+        
+        performSegue(withIdentifier: "goToTodoList", sender: self)
+        
+    }
+    
+    override func prepare(for segue: UIStoryboardSegue, sender: Any?) {
+        let destinationController = segue.destination as! TodoListViewController
+        
+        if let indexPath = tableView.indexPathForSelectedRow {
+            selectedCategory = categories[indexPath.row]
+            destinationController.category = selectedCategory
+        }
+    }
+    
     
     //MARK: Data manipulation methods
     
@@ -78,14 +94,13 @@ class CategoryViewController: UITableViewController {
         
         do {
             categories = try context.fetch(request)
+            tableView.reloadData()
         } catch  {
             print("could not fetch categories \(error)")
         }
     }
     
     func saveCategories() {
-        // TODO: Save the categories
-        
         do {
             try context.save()
         } catch  {
